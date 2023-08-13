@@ -19,15 +19,29 @@ import {AppInfo, AppType} from '../model/AppInfo';
 import AppListItem from '../components/AppListItem';
 import { DataSource } from '../data/DataSource';
 import router from '@ohos.router';
-
+import common from '@ohos.app.ability.common'
+import data_Preferences from '@ohos.data.preferences';
+import installer from '@ohos.bundle.installer';
+import promptAction from '@ohos.promptAction';
+import fileio from '@ohos.fileio';
+import picker from '@ohos.file.picker';
+import dataShare from '@ohos.data.dataShare';
+import UIAbility from '@ohos.app.ability.UIAbility';
+import fileUri from '@ohos.file.fileuri';
 @Component
 export default struct App {
   appType: AppType
   @State appList: AppInfo[] = []
-
+  private context = getContext(this) as common.UIAbilityContext
   aboutToAppear() {
-    DataSource.getAppList(this.appType, (data, totalCount)=>{
-      this.appList = data;
+    data_Preferences.getPreferences(this.context, 'repository').then((prefs)=>{
+      prefs.get('repo', 'http://170.178.208.105:3000/ohos-dev/F-OH-Data/raw/master').then((repo)=>{
+        DataSource.changeUrl(repo.toString());
+        DataSource.getAppList(this.appType, (data, totalCount)=>{
+          this.appList = data;
+        })
+      })
+
     })
   }
 
@@ -74,6 +88,22 @@ export default struct App {
               startMargin: 65,
               endMargin: 0
             })
+            Button('Install HAPs')
+              .height('auto')
+              .width('auto')
+              .onClick(()=>{
+
+                globalThis.context = this.context;
+                let DocumentSelectOptions = new picker.DocumentSelectOptions();
+                let documentPicker = new picker.DocumentViewPicker();
+                documentPicker.select(DocumentSelectOptions).then((DocumentSelectResult) => {
+                  this.installApp(DocumentSelectResult[0])
+                }).catch((err) => {
+                  console.error('DocumentViewPicker.select failed with err: ' + err);
+                });
+
+
+              })
           }
           .width('100%')
 //          .margin({top: 7.5, bottom: 7.5})
@@ -89,5 +119,48 @@ export default struct App {
     .width('100%')
     .height('100%')
     .backgroundColor('#ffffff')
+  }
+  // 安装应用 或 更新应用
+  async installApp(hapPath: string) {
+    hapPath = fileUri.getUriFromPath(hapPath);
+    let filePath = globalThis.abilityContext.filesDir + '/' + 'org.ohosdev.foh' + '-' + '1.0.0' + ".hap";
+    promptAction.showDialog({
+      title: 'Information',
+      message: hapPath,
+      buttons: [
+        { text: 'OK', color: '#3478f6', }
+      ],
+    })
+    fileio.copyFile(hapPath, filePath).then(function(){
+      let hapFilePaths = [filePath];
+      let installParam = {
+        userId: 100,
+        isKeepData: false,
+        installFlag: 1,
+      };
+
+      try {
+
+        installer.getBundleInstaller().then(data => {
+          data.install(hapFilePaths, installParam, err => {
+            if (err) {
+              console.error('install failed:' + err.message);
+              promptAction.showToast({ message: '失败'});
+            } else {
+              console.info('install successfully.');
+              promptAction.showToast({ message: '成功'});
+            }
+          });
+        }).catch(error => {
+          promptAction.showToast({ message:'失败' });
+        });
+      } catch (error) {
+        console.error('getBundleInstaller failed. Cause: ' + error.message);
+        promptAction.showToast({ message: '失败'});
+      }
+    }).catch(function(err){
+      console.info("copyFile failed with error:"+ err);
+    });
+
   }
 }

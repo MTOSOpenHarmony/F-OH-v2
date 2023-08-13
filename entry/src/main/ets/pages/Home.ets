@@ -16,14 +16,19 @@
  */
 
 import { AppType } from '../model/AppInfo';
-import { DataSource } from '../data/DataSource';
+import { DataSource, ds_server } from '../data/DataSource';
 import { HomePageData } from '../model/HomePageData';
 import promptAction from '@ohos.promptAction';
-
+import data_Preferences from '@ohos.data.preferences';
 const ToastDuration = 2000
+import featureAbility from '@ohos.ability.featureAbility'
+import UIAbility from '@ohos.app.ability.UIAbility';
+import common from '@ohos.app.ability.common'
+import hilog from '@ohos.hilog';
+let preferences = null;
 
 @Component
-export default struct Home {
+export default struct Home{
   // 搜索
   private swiperController: SwiperController = new SwiperController()
   private controller: SearchController = new SearchController()
@@ -36,21 +41,30 @@ export default struct Home {
   @State gameCount: number = 0;
 
   @State homePageData: HomePageData = new HomePageData({});
-
+  private context = getContext(this) as common.UIAbilityContext
   aboutToAppear() {
-    DataSource.getHomePageData((data) =>{
-      this.homePageData = data;
-    }, (err) => {
-      promptAction.showToast({ message: '网路异常', duration: ToastDuration });
-    });
-
-    DataSource.getAppList(AppType.APP, (data, totalCount)=>{
-      this.totalCount = totalCount;
-      this.appCount = (data as []).length;
-      this.gameCount = totalCount - this.appCount;
-    })
+    this.reload();
   }
+  reload() {
+    data_Preferences.getPreferences(this.context, 'repository').then((prefs)=>{
+      prefs.get('repo', 'http://170.178.208.105:3000/ohos-dev/F-OH-Data/raw/master').then((repo)=>{
+        DataSource.changeUrl(repo.toString());
+        DataSource.getHomePageData(repo.toString(),(data) =>{
+          this.homePageData = data;
+        }, (err) => {
+          promptAction.showToast({ message: '网路异常', duration: ToastDuration });
+        });
+        DataSource.changeUrl(repo.toString());
+        DataSource.getAppList(AppType.APP, (data, totalCount)=>{
+          this.totalCount = totalCount;
+          this.appCount = (data as []).length;
+          this.gameCount = totalCount - this.appCount;
+        })
+      })
 
+    })
+
+  }
   @Builder NavigationTitle() {
     Column() {
       Text('F-OH')

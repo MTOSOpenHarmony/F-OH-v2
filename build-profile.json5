@@ -17,7 +17,20 @@
 
 {
   "app": {
-    "signingConfigs": [],
+    "signingConfigs": [
+      {
+        "name": "default",
+        "material": {
+          "certpath": "C:\\Users\\Places\\.ohos\\config\\openharmony\\auto_ohos_default_F-OH_org.ohosdev.foh.cer",
+          "storePassword": "0000001A152A0C7D53EA192211E114C066590F40314A12FF4BD200A1F4A43BE78D779AFD82B0770115DA",
+          "keyAlias": "debugKey",
+          "keyPassword": "0000001A20C5F2D60F33B1927CABCEB79DE444DEFD2363210773864317A48E8A4855D8759E5D2C6CB818",
+          "profile": "C:\\Users\\Places\\.ohos\\config\\openharmony\\auto_ohos_default_F-OH_org.ohosdev.foh.p7b",
+          "signAlg": "SHA256withECDSA",
+          "storeFile": "C:\\Users\\Places\\.ohos\\config\\openharmony\\auto_ohos_default_F-OH_org.ohosdev.foh.p12"
+        }
+      }
+    ],
     "compileSdkVersion": 9,
     "compatibleSdkVersion": 9,
     "products": [
