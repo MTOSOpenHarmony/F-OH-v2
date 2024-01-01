@@ -19,9 +19,10 @@ import WindowStageUtil from '../util/WindowStageUtil';
 import { SettingRow } from '../components/Settings';
 import promptAction from '@ohos.promptAction';
 import router from '@ohos.router';
+import { appname } from '../data/DataSource';
 
 const ToastDuration = 1000
-const APP_VERSION = "1.3.4";
+const APP_VERSION = "1.0.0";
 
 @Entry
 @Component
@@ -34,7 +35,7 @@ struct AboutApp {
 
   @Builder NavigationTitle() {
     Column() {
-      Text('关于F-OH')
+      Text('关于'+appname)
         .fontColor('#182431')
         .fontSize(26)
         .fontWeight(500)
@@ -77,7 +78,7 @@ struct AboutApp {
         .height(72)
         .width(72)
         .border({width: 0.7, radius: 16, color: '#ebebeb'})
-      Text($r('app.string.EntryAbility_label'))
+      Text(appname)
         .fontSize(18)
         .fontColor('#182431')
         .fontWeight(500)
@@ -99,19 +100,19 @@ struct AboutApp {
     // 第一组
     Column() {
       List() {
-        ListItem() { SettingRow({icon: $r('app.media.ic_foh'), title: '应用简介', info: 'OpenHarmony自由开源软件的应用中心', showRightArrow: false, clickHandler: ()=> {}}) }
-        ListItem() { SettingRow({icon: $r('app.media.author_avatar'), title: '应用作者', info: 'westinyang', clickHandler: ()=> {
-          router.pushUrl({ url: 'pages/AboutAuthor', params: {} });
-        }}) }
-        ListItem() { SettingRow({icon: $r('app.media.ic_favorite'), title: '开源仓库', info: 'https://gitee.com/ohos-dev/f-oh', clickHandler: ()=> {
+        ListItem() { SettingRow({icon: $r('app.media.ic_foh'), title: 'Based On', info: 'F-OH', showRightArrow: false, clickHandler: ()=> {}}) }
+        // ListItem() { SettingRow({icon: $r('app.media.author_avatar'), title: '应用作者', info: 'westinyang', clickHandler: ()=> {
+        //   router.pushUrl({ url: 'pages/AboutAuthor', params: {} });
+        // }}) }
+        ListItem() { SettingRow({icon: $r('app.media.ic_favorite'), title: 'Original Source', info: 'https://gitee.com/ohos-dev/f-oh', clickHandler: ()=> {
           router.pushUrl({ url: 'pages/Browser', params: {title: '开源仓库', url: 'https://gitee.com/ohos-dev/f-oh'} });
         }}) }
-        ListItem() { SettingRow({icon: $r('app.media.ic_gitee'), title: '开源社区', info: 'https://gitee.com/ohos-dev', clickHandler: ()=> {
-          router.pushUrl({ url: 'pages/Browser', params: {title: '开源社区', url: 'https://gitee.com/ohos-dev'} });
-        }}) }
-        ListItem() { SettingRow({icon: $r('app.media.ic_qq2'), title: '开源社区交流群', info: '752399947', clickHandler: ()=> {
-          promptAction.showToast({ message: '待实现，跳转开源社区交流群', duration: ToastDuration });
-        }}) }
+        // ListItem() { SettingRow({icon: $r('app.media.ic_gitee'), title: '开源社区', info: 'https://gitee.com/ohos-dev', clickHandler: ()=> {
+        //   router.pushUrl({ url: 'pages/Browser', params: {title: '开源社区', url: 'https://gitee.com/ohos-dev'} });
+        // }}) }
+        // ListItem() { SettingRow({icon: $r('app.media.ic_qq2'), title: '开源社区交流群', info: '752399947', clickHandler: ()=> {
+        //   promptAction.showToast({ message: '待实现，跳转开源社区交流群', duration: ToastDuration });
+        // }}) }
       }.divider({ strokeWidth: 0.5, color: '#d6d6d6', startMargin: 58, endMargin: 14 })
     }.borderRadius(18).backgroundColor('#fff')
   }

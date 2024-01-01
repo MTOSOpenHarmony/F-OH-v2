@@ -23,6 +23,9 @@ import fs from '@ohos.file.fs';
 import bundleManager from '@ohos.bundle.bundleManager';
 import hilog from '@ohos.hilog';
 import router from '@ohos.router';
+import http from '@ohos.net.http';
+import { api_fetchinfo, arch, currentAPI, devTyp } from '../data/DataSource';
+import { ReleaseInfo } from '../model/ReleaseInfo';
 
 const ToastDuration = 1000
 
@@ -30,9 +33,38 @@ const ToastDuration = 1000
 export default struct AppListItem {
   @State appInfo: AppInfo = null;
   @State mainAbilityName: string = '';
-  @State versionCode: string = '';
+  @State versionCode: number = 0;
   @State installLoading: boolean = false;
-
+  getAppReleaseInfo(){
+    var app = this.appInfo
+    var ver = this.versionCode
+    let httpRequest = http.createHttp();
+    httpRequest.request(api_fetchinfo+app.packageName, {
+      method: http.RequestMethod.POST,
+      extraData:{
+        'currentApi':currentAPI,
+        'archType':arch,
+        'devType':devTyp,
+        'currentVersion':(ver == 0) ? null : this.versionCode
+      }
+    }, (err, data) => {
+      if (!err && data.responseCode == 200) {
+        // JSON字符串 转 数组（这里直接 as AppInfo[] 会导致元数据之外的属性不存在）
+        let dataArr = JSON.parse(data.result as string) as ReleaseInfo
+        this.appInfo.releaseinfo = dataArr;
+        if (this.appInfo.releaseinfo.verCode >= this.versionCode) {
+          this.appInfo.status = AppStatus.INSTALLED;
+          this.appInfo.actionText = AppActionText.OPEN;
+        } else {
+          this.appInfo.status = AppStatus.UPDATABLE;
+          this.appInfo.actionText = AppActionText.UPDATE;
+        }
+      } else {
+        console.info('error:' + JSON.stringify(err));
+        httpRequest.destroy();
+      }
+    });
+  }
   aboutToAppear() {
     // 检查应用是否已经安装，并获取指定包名应用的启动Ability名
     let bundleName = this.appInfo.packageName;
@@ -48,15 +80,16 @@ export default struct AppListItem {
           hilog.info(0x0000, 'testTag', 'getBundleInfo successfully: %{public}s', JSON.stringify(data));
           // 记录包名和版本号
           this.mainAbilityName = data.hapModulesInfo[0].mainElementName;
-          this.versionCode = data.versionName
+          this.versionCode = data.versionCode
+          this.getAppReleaseInfo()
           // 校验是否有新版本
-          if (this.appInfo.version == this.versionCode) {
-            this.appInfo.status = AppStatus.INSTALLED;
-            this.appInfo.actionText = AppActionText.OPEN;
-          } else {
-            this.appInfo.status = AppStatus.UPDATABLE;
-            this.appInfo.actionText = AppActionText.UPDATE;
-          }
+          // if (this.appInfo.version == this.versionCode) {
+          //   this.appInfo.status = AppStatus.INSTALLED;
+          //   this.appInfo.actionText = AppActionText.OPEN;
+          // } else {
+          //   this.appInfo.status = AppStatus.UPDATABLE;
+          //   this.appInfo.actionText = AppActionText.UPDATE;
+          // }
         }
       });
     } catch (err) {
@@ -78,22 +111,28 @@ export default struct AppListItem {
       }) {
         // 左 应用图标
         Image(this.appInfo.getIcon() || $r('app.media.icon_default'))
-        .width(55)
-        .height(55)
+        .width(70)
+        .height(70)
         .border({ width: 0.7, radius: 13, color: '#ebebeb' })
         .flexShrink(0)
 //        .backgroundColor('#00f')
 
         // 中 应用信息
         Column() {
+          Flex()
+            .height(10)
           Text(this.appInfo.name)
-            .fontSize(16)
+            .fontSize(18)
             .margin({ top: 2, bottom: 5 })
             .maxLines(1)
+            .fontWeight(600)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
-          Text(this.appInfo.desc).fontSize(12).maxLines(2).textOverflow({ overflow: TextOverflow.Ellipsis })
+          Text(this.appInfo.downloadCount.toString()).opacity(0.7).fontSize(14).maxLines(2).textOverflow({ overflow: TextOverflow.Ellipsis })
+          Flex()
+            .height(5)
+          Text(this.appInfo.maindesc).fontSize(14).opacity(0.7).maxLines(1).textOverflow({ overflow: TextOverflow.Clip })
         }
-        .height(55)
+        .height(90)
         .margin({ left: 10, right: 10 })
         .alignItems(HorizontalAlign.Start)
         .flexGrow(1)
@@ -102,11 +141,7 @@ export default struct AppListItem {
       }
       .height('100%')
       .onClick(()=>{
-        if (this.appInfo.hapUrl) {
-          router.pushUrl({ url: 'pages/AppDetail', params: {appInfo: this.appInfo, localVersionName: this.versionCode} });
-        } else {
-          promptAction.showToast({ message: '应用信息无效', duration: ToastDuration });
-        }
+        router.pushUrl({ url: 'pages/AppDetail', params: {appInfo: this.appInfo, localVersionName: this.versionCode,releaseInfo: this.appInfo.releaseinfo} });
       })
 //      .backgroundColor('#f00')
 
@@ -114,7 +149,7 @@ export default struct AppListItem {
       Column() {
         Stack() {
           Button(this.appInfo.actionText.toString())
-            .width('100%').height(26).fontSize(14).fontColor('#3478f6').backgroundColor('#eeeeee')
+            .width('100%').height(30).fontSize(16).fontColor('#3478f6').backgroundColor('#eeeeee').fontWeight(500)
             .onClick(()=>{
               this.appAction();
             })
@@ -124,16 +159,16 @@ export default struct AppListItem {
               LoadingProgress().width('100%').height('100%').color('#3478f6')
             }.alignItems(VerticalAlign.Center).width('100%').height('100%')
           }
-          .width('100%').height(26).fontSize(14).fontColor('#3478f6').backgroundColor('#eeeeee')
+          .width('100%').height(30).fontSize(16).fontColor('#3478f6').backgroundColor('#eeeeee').fontWeight(500)
           .visibility(this.installLoading ? Visibility.Visible : Visibility.None)
         }
       }
       .width(65)
-      .height(55)
+      .height(80)
       .flexShrink(0)
       .justifyContent(FlexAlign.Center)
     }
-    .height(69.6)
+    .height(90)
 //    .backgroundColor('#0f0')
   }
 
@@ -162,7 +197,7 @@ export default struct AppListItem {
     let downloadTask;
 
     // 下载路径，示例: /data/storage/el2/base/haps/entry/files/org.ohosdev.deviceinfo-v1.0.0.hap
-    let filePath = globalThis.abilityContext.filesDir + '/' + this.appInfo.packageName + '-' + this.appInfo.version + ".hap";
+    let filePath = globalThis.abilityContext.filesDir + '/' + this.appInfo.packageName + '-' + this.appInfo.releaseinfo.version + ".hap";
 
     // 判断文件是否存在
     fs.access(filePath).then((res) => {
@@ -173,7 +208,7 @@ export default struct AppListItem {
         // 不存在，下载并安装
         try {
           request.downloadFile(globalThis.abilityContext, {
-            url: this.appInfo.getHapUrl(),
+            url: this.appInfo.releaseinfo.getHapUrl(),
             filePath: filePath
           }).then((data) => {
             downloadTask = data;

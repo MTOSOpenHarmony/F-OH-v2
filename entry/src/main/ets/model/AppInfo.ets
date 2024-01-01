@@ -16,6 +16,8 @@
  */
 
 import { ds_server } from '../data/DataSource';
+import List from '@ohos.util.List';
+import { ReleaseInfo } from './ReleaseInfo';
 
 class AppInfo {
   constructor(source: Partial<AppInfo>) {
@@ -26,15 +28,20 @@ class AppInfo {
   id: number
   name: string
   desc: string
+  maindesc: string
+  downloadCount: number
   icon: string
   vender: string
   packageName: string
+  screenShots: List<String>
   version: string
+  stars: number
   hapUrl: string
-  type: string
+  //type: string
   tags: string
-  openSourceAddress: string
-  releaseTime: string
+  website: string
+  releaseinfo?: ReleaseInfo
+  //releaseTime: string
 
   /* 扩展数据 */
   // 应用状态
@@ -45,7 +52,13 @@ class AppInfo {
   getIcon() {
     return this.icon ? ds_server + this.icon : this.icon;
   }
-
+  getScreenshots() {
+    var scs = []
+    for (var sc in this.screenShots){
+      scs.push((ds_server + this.screenShots[sc]))
+    }
+    return scs;
+  }
   getHapUrl() {
     return this.hapUrl ? ds_server + this.hapUrl : this.hapUrl;
   }

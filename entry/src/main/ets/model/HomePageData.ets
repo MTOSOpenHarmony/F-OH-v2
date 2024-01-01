@@ -14,6 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+import List from '@ohos.util.List';
 
 class HomePageData {
   static defaultAnnouncement = 'F-OH 是一个 OpenHarmony 平台上 FOSS（Free and Open Source Software，自由开源软件）的应用中心';
@@ -21,11 +22,14 @@ class HomePageData {
   constructor(source: Partial<Object>) {
     Object.assign(this, source);
   }
-
+  appName: string = "F-OH";
   // 显示公告
   showAnnouncement: boolean = false;
   // 公告内容
   announcement: string = "";
+  sections: any[] = [];
+  slideshow: any[] = [];
+
 }
 
 export {HomePageData}

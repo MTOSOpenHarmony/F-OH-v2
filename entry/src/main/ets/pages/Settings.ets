@@ -21,6 +21,8 @@ import promptAction from '@ohos.promptAction';
 import { SettingRow } from '../components/Settings';
 import common from '@ohos.app.ability.common'
 import data_Preferences from '@ohos.data.preferences';
+import { appname } from '../data/DataSource';
+
 const ToastDuration = 1000
 var repo = "";
 @Component
@@ -28,7 +30,7 @@ export default struct Settings {
   private context = getContext(this) as common.UIAbilityContext
   aboutToAppear(): void {
     data_Preferences.getPreferences(this.context, 'repository').then((prefs)=>{
-      prefs.get('repo', 'http://170.178.208.105:3000/ohos-dev/F-OH-Data/raw/master').then((repo)=>{
+      prefs.get('repo', 'http://192.168.0.32:8889/').then((repo)=>{
         repo = repo.toString();
       });
 
@@ -50,7 +52,7 @@ export default struct Settings {
       Text('设置')
         .fontColor('#182431')
         .fontSize(26)
-        .fontWeight(500)
+        .fontWeight(FontWeight.Bold)
         .margin({left: -25})
     }.alignItems(HorizontalAlign.Start)
     .width('100%')
@@ -73,20 +75,20 @@ export default struct Settings {
         Scroll() {
           Column() {
             // 第1组
-            Column() {
-              List() {
-                ListItem() { SettingRow({icon: $r('app.media.ic_download'), title: '下载管理', info: '待实现', clickHandler: ()=> {
-                  promptAction.showToast({ message: '待实现，下载管理', duration: ToastDuration });
-                }}) }
-                ListItem() { SettingRow({icon: $r('app.media.ic_control'), title: '应用管理', info: '待实现', clickHandler: ()=> {
-                  promptAction.showToast({ message: '待实现，应用管理', duration: ToastDuration });
-                }}) }
-                ListItem() { SettingRow({icon: $r('app.media.ic_internet'), title: '应用元数据源管理', info: '应用元数据源管理', clickHandler: ()=> {
-                  this.changeRepo();
-                }}) }
-
-              }.divider({ strokeWidth: 0.5, color: '#d6d6d6', startMargin: 54, endMargin: 14 })
-            }.borderRadius(18).backgroundColor('#fff').margin({bottom: 10})
+            // Column() {
+            //   List() {
+            //     ListItem() { SettingRow({icon: $r('app.media.ic_download'), title: '下载管理', info: '待实现', clickHandler: ()=> {
+            //       promptAction.showToast({ message: '待实现，下载管理', duration: ToastDuration });
+            //     }}) }
+            //     ListItem() { SettingRow({icon: $r('app.media.ic_control'), title: '应用管理', info: '待实现', clickHandler: ()=> {
+            //       promptAction.showToast({ message: '待实现，应用管理', duration: ToastDuration });
+            //     }}) }
+            //     ListItem() { SettingRow({icon: $r('app.media.ic_internet'), title: '应用元数据源管理', info: '应用元数据源管理', clickHandler: ()=> {
+            //       this.changeRepo();
+            //     }}) }
+            //
+            //   }.divider({ strokeWidth: 0.5, color: '#d6d6d6', startMargin: 54, endMargin: 14 })
+            // }.borderRadius(18).backgroundColor('#fff').margin({bottom: 10})
 
             // 第2组
             Column() {
@@ -100,12 +102,12 @@ export default struct Settings {
             // 第3组
             Column() {
               List() {
-                ListItem() { SettingRow({icon: $r('app.media.ic_foh'), title: '关于F-OH', info: 'OpenHarmony自由开源软件的应用中心', clickHandler: ()=> {
+                ListItem() { SettingRow({icon: $r('app.media.ic_foh'), title: '关于'+appname, info: 'OpenHarmony自由开源软件的应用中心', clickHandler: ()=> {
                   router.pushUrl({ url: 'pages/AboutApp', params: {} });
                 }}) }
-                ListItem() { SettingRow({icon: $r('app.media.author_avatar'), title: '关于作者', info: 'westinyang', clickHandler: ()=> {
-                  router.pushUrl({ url: 'pages/AboutAuthor', params: {} });
-                }}) }
+                // ListItem() { SettingRow({icon: $r('app.media.author_avatar'), title: '关于作者', info: 'westinyang', clickHandler: ()=> {
+                //   router.pushUrl({ url: 'pages/AboutAuthor', params: {} });
+                // }}) }
               }.divider({ strokeWidth: 0.5, color: '#d6d6d6', startMargin: 54, endMargin: 14 })
             }.borderRadius(18).backgroundColor('#fff').margin({bottom: 10})
 

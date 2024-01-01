@@ -31,15 +31,15 @@ export struct InfoRow {
       justifyContent: FlexAlign.SpaceBetween,
       alignItems: ItemAlign.Center
     }) {
-      Image(this.icon).width(26).height(26).borderRadius(13)
-      .flexShrink(0)
-
+      // Image(this.icon).width(26).height(26).borderRadius(13)
+      // .flexShrink(0)
       Column() {
-        Text(this.title).fontSize(16).fontColor('#FF182431').alignSelf(ItemAlign.Start)
-        Text(this.info).fontSize(13).fontColor('#99182431').maxLines(1).textOverflow({ overflow: TextOverflow.Ellipsis }).alignSelf(ItemAlign.Start).margin({top: 4})
+        Text(this.title).fontSize(20).fontColor('#FF182431').alignSelf(ItemAlign.Start).fontWeight(FontWeight.Bold)
+        Text(this.info).fontSize(16).fontColor('#99182431').maxLines(1).textOverflow({ overflow: TextOverflow.Ellipsis }).alignSelf(ItemAlign.Start).margin({top: 4})
       }
       .margin({ left: 14 })
       .alignItems(HorizontalAlign.Center)
+      .align((this.info == null)? Alignment.Center:Alignment.Top)
       .flexGrow(1)
 
       if (this.showRightArrow) {
@@ -47,7 +47,7 @@ export struct InfoRow {
       }
     }
     .width('100%')
-    .height(48)
+    .height((this.info == null)? 25 :48)
     .onClick(this.clickHandler || ((e) => {
       let pasteData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, this.info.toString())
       pasteboard.getSystemPasteboard()
@@ -69,6 +69,6 @@ export struct InfoRow {
         };
       });
     }))
-    .margin({top:5, bottom: 5})
+    .margin({top:5, bottom: 10})
   }
 }

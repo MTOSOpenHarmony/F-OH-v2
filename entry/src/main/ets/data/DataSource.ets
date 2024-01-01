@@ -18,36 +18,65 @@
 import { HomePageData } from '../model/HomePageData';
 import {AppInfo, AppType} from '../model/AppInfo';
 import http from '@ohos.net.http';
+import deviceInfo from '@ohos.deviceInfo'
+import fileio from '@ohos.fileio';
+import util from '@ohos.util';
 
 // 服务器地址
 // 本地调试请拉取F-OH-Data仓库到本地，并启动一个静态资源服务器，使用本地服务器，尽量避免使用线上服务器地址
 // const ds_server: string = "http://192.168.1.100:8080";
-const ds_server: string = "";
-
+const ds_server: string = "http://192.168.0.108:8889/";
+const currentAPI: number = deviceInfo.sdkApiVersion;
+const arch: string = deviceInfo.abiList
+const devTyp: string = deviceInfo.deviceType
 // API Path
 const api_homePageData: string = ds_server + "/homePageData.json";
 const api_allAppList: string = ds_server + "/allAppList.json";
-
+const api_fetchinfo: string = ds_server + "/fetchinfo/";
+var appname = 'AppMarket'
 class DataSource {
   public static allAppList: AppInfo[] = [];
-
+  public static permissions: {"ohosperm":{}};
   constructor() {
   }
+  static load(){
+    globalThis.getContext().resourceManager.getRawFd('permissions.json',(error, value)=>{
+      let fd = value.fd;
+      let buf = new ArrayBuffer(value.length);
+      fileio.read(fd, buf, function (err, readOut) {
+        if (readOut) {
 
+          DataSource.permissions = JSON.parse(new util.TextDecoder().decodeWithStream(new Uint8Array(readOut.buffer)))
+          //console.info(this.permissions["ohos.permission.USE_BLUETOOTH"])
+        }
+      });
+    })
+    return this.permissions
+  }
   /**
    * 获取首页数据
    */
   static getHomePageData(success: Function, error: Function) {
     let httpRequest = http.createHttp();
+    this.load()
     httpRequest.request(api_homePageData, {
       method: http.RequestMethod.GET
     }, (err, data) => {
       if (!err && data.responseCode == 200) {
         let dataJson = JSON.parse(data.result as string) as Object
         let dataObj = new HomePageData(dataJson)
+        appname = dataObj.appName
+        for (var data2 in dataObj.sections as []){
+          var data3 = dataObj.sections[data2]
+          let tmpList: AppInfo[] = [];
+            data3.apps.map((item)=>{
+              tmpList.push(new AppInfo(item))
+          })
+          data3.apps = tmpList
+        }
         success(dataObj);
       } else {
-        console.info('error:' + JSON.stringify(err));
+        console.info('error:' + err);
         httpRequest.destroy();
         error(err);
       }
@@ -72,9 +101,7 @@ class DataSource {
         })
         DataSource.allAppList = tmpList;
         // 过滤类型
-        let filterData: AppInfo[] = DataSource.allAppList.filter((item, index, array)=>{
-          return item.type == appType;
-        })
+        let filterData: AppInfo[] = DataSource.allAppList
         success(filterData, dataArr.length);
       } else {
         console.info('error:' + JSON.stringify(err));
@@ -82,6 +109,8 @@ class DataSource {
       }
     });
   }
+
+
 }
 
-export {DataSource, ds_server}
+export {DataSource, ds_server,currentAPI,arch,devTyp,api_fetchinfo,appname}

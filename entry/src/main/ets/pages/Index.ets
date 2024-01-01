@@ -72,6 +72,7 @@ struct Index {
       .barMode(BarMode.Fixed)
       .barWidth('100%')
       .barHeight(66)
+      .scrollable(false)
       //      .backgroundColor('#F1F3F5')
       .onChange((index: number) => {
         this.currentIndex = index

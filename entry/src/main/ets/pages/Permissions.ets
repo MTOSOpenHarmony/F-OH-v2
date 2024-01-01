@@ -28,8 +28,10 @@ import fs from '@ohos.file.fs';
 import {AppInfo, AppActionText, AppStatus} from '../model/AppInfo';
 import request from '@ohos.request';
 import http from '@ohos.net.http';
-import { api_fetchinfo, arch, currentAPI, devTyp } from '../data/DataSource';
+import { api_fetchinfo, arch, currentAPI, DataSource, devTyp } from '../data/DataSource';
 import { ReleaseInfo } from '../model/ReleaseInfo';
+import resourceManager from '@ohos.resourceManager';
+import util from '@ohos.util';
 
 const ToastDuration = 1000
 @Entry
@@ -37,8 +39,13 @@ const ToastDuration = 1000
 struct AppDetail {
   @State mainAbilityName: string = '';
   @State releaseInfo: ReleaseInfo = new ReleaseInfo(router.getParams()['releaseInfo'])
+  @State permissions: any = DataSource.permissions;
+  aboutToAppear() {
+
+  }
   onPageShow() {
     console.info('AboutComponent onPageShow');
+
     WindowStageUtil.setLayoutFullScreen(globalThis.windowStage, '#ffffff', WindowStageUtil.COLOR_BLACK, '#ffffff', WindowStageUtil.COLOR_BLACK);
   }
 
@@ -71,10 +78,18 @@ struct AppDetail {
           List(){
             ForEach(this.releaseInfo.requiredPerm,(item,index)=>{
               ListItem(){
-                Text(this.releaseInfo.requiredPerm[index])
+                Column(){
+                  //Text(this.releaseInfo.requiredPerm[index])
+                  if (this.releaseInfo.requiredPerm[index] in this.permissions){
+                    Text(this.permissions[this.releaseInfo.requiredPerm[index]]["description"].replaceAll("允许",""))
+                      .fontSize(20)
+                      .fontWeight(FontWeight.Bold)
+                  }
+
+                }
               }
               .height(80)
-              .width("100%")
+              .width("98%")
               .margin(10)
               .backgroundColor("white")
               .borderRadius(25)

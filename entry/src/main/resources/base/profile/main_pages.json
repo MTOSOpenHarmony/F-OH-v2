@@ -4,6 +4,10 @@
     "pages/AboutApp",
     "pages/AboutAuthor",
     "pages/Browser",
-    "pages/AppDetail"
+    "pages/AppDetail",
+    "pages/Permissions",
+    "pages/AppInfo",
+    "pages/AppImage",
+    "pages/CardDetails"
   ]
 }

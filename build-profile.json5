@@ -21,13 +21,13 @@
       {
         "name": "default",
         "material": {
-          "certpath": "C:\\Users\\Places\\.ohos\\config\\openharmony\\auto_ohos_default_F-OH_org.ohosdev.foh.cer",
-          "storePassword": "0000001A152A0C7D53EA192211E114C066590F40314A12FF4BD200A1F4A43BE78D779AFD82B0770115DA",
+          "certpath": "C:\\Users\\Places\\.ohos\\config\\openharmony\\auto_ohos_def_F-OH_org.ohosdev.fohv2.cer",
+          "storePassword": "0000001B283118F5460B360E12B4B7BA87B1AB5E6B0AC1BB26B64CB992ED6D09D12BADED60F51146B3D641",
           "keyAlias": "debugKey",
-          "keyPassword": "0000001A20C5F2D60F33B1927CABCEB79DE444DEFD2363210773864317A48E8A4855D8759E5D2C6CB818",
-          "profile": "C:\\Users\\Places\\.ohos\\config\\openharmony\\auto_ohos_default_F-OH_org.ohosdev.foh.p7b",
+          "keyPassword": "0000001BFFE60A9B07E1580394E4C42B044AD128A41F3B0E2D06ADA6106849D4E14DAB02A6A5816AB10A67",
+          "profile": "C:\\Users\\Places\\.ohos\\config\\openharmony\\auto_ohos_def_F-OH_org.ohosdev.fohv2.p7b",
           "signAlg": "SHA256withECDSA",
-          "storeFile": "C:\\Users\\Places\\.ohos\\config\\openharmony\\auto_ohos_default_F-OH_org.ohosdev.foh.p12"
+          "storeFile": "C:\\Users\\Places\\.ohos\\config\\openharmony\\auto_ohos_def_F-OH_org.ohosdev.fohv2.p12"
         }
       }
     ],
@@ -36,7 +36,7 @@
     "products": [
       {
         "name": "default",
-        "signingConfig": "default",
+        "signingConfig": "default"
       }
     ]
   },

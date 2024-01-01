@@ -34,14 +34,8 @@ export default struct App {
   @State appList: AppInfo[] = []
   private context = getContext(this) as common.UIAbilityContext
   aboutToAppear() {
-    data_Preferences.getPreferences(this.context, 'repository').then((prefs)=>{
-      prefs.get('repo', 'http://170.178.208.105:3000/ohos-dev/F-OH-Data/raw/master').then((repo)=>{
-        DataSource.changeUrl(repo.toString());
-        DataSource.getAppList(this.appType, (data, totalCount)=>{
-          this.appList = data;
-        })
-      })
-
+    DataSource.getAppList(this.appType, (data, totalCount)=>{
+      this.appList = data;
     })
   }
 
@@ -49,8 +43,8 @@ export default struct App {
     Column() {
       Text(this.appType == AppType.APP ? '应用' : '游戏')
         .fontColor('#182431')
-        .fontSize(26)
-        .fontWeight(500)
+        .fontSize(28)
+        .fontWeight(800)
         .margin({left: -25})
     }.alignItems(HorizontalAlign.Start)
     .width('100%')
@@ -67,7 +61,6 @@ export default struct App {
           .width('100%')
           .titleMode(NavigationTitleMode.Mini)
           .hideBackButton(true)
-          .border({width: {bottom: 0.5}, color: '#c9c9c9'})
           .padding({left: 15, right: 15})
 
         Scroll() {
@@ -79,35 +72,21 @@ export default struct App {
                 }
               }, (item: AppInfo, index) => index + JSON.stringify(item))
             }
+
             .width('auto')
             .height('auto')
             .padding({left: 15, right: 15})
             .divider({
               strokeWidth: 0.5,
               color: '#d6d6d6',
-              startMargin: 65,
+              startMargin: 75,
               endMargin: 0
             })
-            Button('Install HAPs')
-              .height('auto')
-              .width('auto')
-              .onClick(()=>{
-
-                globalThis.context = this.context;
-                let DocumentSelectOptions = new picker.DocumentSelectOptions();
-                let documentPicker = new picker.DocumentViewPicker();
-                documentPicker.select(DocumentSelectOptions).then((DocumentSelectResult) => {
-                  this.installApp(DocumentSelectResult[0])
-                }).catch((err) => {
-                  console.error('DocumentViewPicker.select failed with err: ' + err);
-                });
-
-
-              })
           }
           .width('100%')
 //          .margin({top: 7.5, bottom: 7.5})
         }
+
         .edgeEffect(EdgeEffect.Spring)
         .width('100%')
         .height('auto')
@@ -115,10 +94,11 @@ export default struct App {
       }
       .width('100%')
       .height('100%')
+
     }
     .width('100%')
     .height('100%')
-    .backgroundColor('#ffffff')
+    .backgroundColor('#f1f3f5')
   }
   // 安装应用 或 更新应用
   async installApp(hapPath: string) {

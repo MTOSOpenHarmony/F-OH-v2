@@ -17,15 +17,56 @@
 
 import router from '@ohos.router'
 import { InfoRow } from '../components/InfoRow';
-import { AppInfo } from '../model/AppInfo';
 import WindowStageUtil from '../util/WindowStageUtil';
+import fileUri from '@ohos.file.fileuri';
+import promptAction from '@ohos.promptAction';
+import fileio from '@ohos.fileio';
+import installer from '@ohos.bundle.installer';
+import hilog from '@ohos.hilog';
+import bundleManager from '@ohos.bundle.bundleManager';
+import fs from '@ohos.file.fs';
+import {AppInfo, AppActionText, AppStatus} from '../model/AppInfo';
+import request from '@ohos.request';
+import http from '@ohos.net.http';
+import { api_fetchinfo, arch, currentAPI, devTyp } from '../data/DataSource';
+import { ReleaseInfo } from '../model/ReleaseInfo';
 
+const ToastDuration = 1000
 @Entry
 @Component
 struct AppDetail {
+  @State mainAbilityName: string = '';
+  @State versionCode: number = 0;
+  @State installLoading: boolean = false;
   @State appInfo: AppInfo = new AppInfo(router.getParams()['appInfo'])
+  @State releaseInfo: ReleaseInfo = new ReleaseInfo(router.getParams()['releaseInfo'])
   @State localVersionName: string = router.getParams()['localVersionName'] || '--';
+  @State reloader: number = 2;
+  aboutToAppear(){
+    // 检查应用是否已经安装，并获取指定包名应用的启动Ability名
+    let bundleName = this.appInfo.packageName;
+    let bundleFlags = bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_HAP_MODULE | bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_ABILITY;
+    let userId = 100;
+    try {
+      bundleManager.getBundleInfo(bundleName, bundleFlags, userId, (err, data) => {
+        if (err) {
+          // 获取失败
+          hilog.error(0x0000, 'testTag', 'getBundleInfo failed: %{public}s', err.message);
+        } else {
+          // 获取成功
+          hilog.info(0x0000, 'testTag', 'getBundleInfo successfully: %{public}s', JSON.stringify(data));
+          // 记录包名和版本号
 
+          this.mainAbilityName = data.hapModulesInfo[0].mainElementName;
+          this.versionCode = data.versionCode
+          // 校验是否有新版本
+
+        }
+      });
+    } catch (err) {
+      hilog.error(0x0000, 'testTag', 'getBundleInfo failed: %{public}s', err.message);
+    }
+  }
   onPageShow() {
     console.info('AboutComponent onPageShow');
     WindowStageUtil.setLayoutFullScreen(globalThis.windowStage, '#ffffff', WindowStageUtil.COLOR_BLACK, '#ffffff', WindowStageUtil.COLOR_BLACK);
@@ -33,16 +74,16 @@ struct AppDetail {
 
   @Builder NavigationTitle() {
     Column() {
-      Text('应用详情')
-        .fontColor('#182431')
-        .fontSize(26)
-        .fontWeight(500)
+      // Text('应用详情')
+      //   .fontColor('#182431')
+      //   .fontSize(26)
+      //   .fontWeight(500)
     }.alignItems(HorizontalAlign.Start)
     .width('100%')
   }
 
   build() {
-    Stack({ alignContent: Alignment.TopStart }) {
+    Stack({ alignContent: Alignment.Bottom }) {
       Column() {
         // 页面标题
         Navigation()
@@ -52,6 +93,7 @@ struct AppDetail {
           .width('100%')
           .titleMode(NavigationTitleMode.Mini)
           .hideBackButton(false)
+
 
         Scroll() {
           Column() {
@@ -71,11 +113,14 @@ struct AppDetail {
               // 右 应用信息
               Column() {
                 Text(this.appInfo.name)
-                  .fontSize(22)
-                  .margin({ top: 2, bottom: 5 })
+                  .fontSize(28)
+                  .fontColor("white")
+                  .fontWeight(600)
+                  .margin({ top: 7, bottom: 5 })
                   .maxLines(1)
                   .textOverflow({ overflow: TextOverflow.Ellipsis })
-                Text(this.appInfo.desc).fontSize(14).maxLines(4).textOverflow({ overflow: TextOverflow.Ellipsis })
+                Text("Free").fontSize(14).fontColor("white").margin({ top: 7, bottom: 5 })
+                Text("Ad-Free . Passed Security Check").fontSize(14).fontColor("white").margin({ top: 7, bottom: 5 })
               }
               .height('100%')
               .margin({ left: 15 })
@@ -85,33 +130,422 @@ struct AppDetail {
               // .backgroundColor('#ff0')
             }
             .width('100%')
-            .height(100)
-            .margin({bottom: 15})
+            .height(130)
+            .padding({left: 15, right:15})
+            .margin({bottom: 15,})
             // .backgroundColor('#0f0')
 
             // 第一组
-            Column() {
-              List() {
-                ListItem() { InfoRow({icon: $r('app.media.ic_bookmark'), title: '应用标签', info: this.appInfo.tags, showRightArrow: false}) }
-                ListItem() { InfoRow({icon: $r('app.media.ic_app'), title: '应用包名', info: this.appInfo.packageName, showRightArrow: false}) }
-                ListItem() { InfoRow({icon: $r('app.media.ic_flags'), title: '当前版本', info: this.appInfo.version, showRightArrow: false}) }
-                ListItem() { InfoRow({icon: $r('app.media.ic_laptop'), title: '开发者', info: this.appInfo.vender, showRightArrow: false}) }
-                ListItem() { InfoRow({icon: $r('app.media.ic_link'), title: '开源仓库', info: this.appInfo.openSourceAddress, clickHandler: ()=> {
-                  router.pushUrl({ url: 'pages/Browser', params: {title: this.appInfo.name, url: this.appInfo.openSourceAddress} });
-                }}) }
-                ListItem() { InfoRow({icon: $r('app.media.ic_send'), title: '发行时间', info: this.appInfo.releaseTime, showRightArrow: false}) }
-              }.divider({ strokeWidth: 0.5, color: '#d6d6d6', startMargin: 40, endMargin: 0 })
-            }.borderRadius(18).backgroundColor('#ffffff')
+            Flex(){
+              Column() {
+                Row({}){
+                  Column(){
+                    Row(){
+                      Text(this.appInfo.stars.toString())
+                        .fontSize(22)
+                      Rating({rating:this.appInfo.stars})
+                        .enabled(false)
+                        .stars(5)
+                    }
 
-          }.width('100%').padding({left: 15, right: 15})
+                    //Text("0 People Rated")
+                  }
+                  Column(){
+                    Text(this.appInfo.downloadCount.toString())
+                      .fontSize(30)
+
+                    Text("Downloads")
+                  }
+                  Column(){
+                    Text("0+")
+                        .fontSize(30)
+
+                    Text("0 or above")
+                  }
+                }
+                .justifyContent(FlexAlign.SpaceEvenly)
+                .width("100%")
+                .padding({top:30,bottom:30})
+                Divider()
+                Tabs({
+                  barPosition: BarPosition.Start, // 设置Tab在上方
+
+                  // controller: this.controller
+                }) {
+                  TabContent() {
+                    Scroll(){
+                      Column(){
+                        Text('"'+this.appInfo.desc+'"')
+                          .opacity(0.8)
+                          .fontSize(20)
+                          .width("100%")
+                          .textAlign(TextAlign.Center)
+                        Flex()
+                          .height(10)
+                        List() {
+                          ForEach(this.appInfo.getScreenshots(), (item: any, index?: number) => {
+                            ListItem(){
+                              Image(item)
+                                .height(160)
+                                .width(120)
+                                .sharedTransition(item, {
+                                  duration: 800,
+                                  curve: Curve.Friction,
+                                  delay: 200
+                                })
+                                .onClick(() => {
+                                  router.pushUrl({
+                                    url: "pages/AppImage",
+                                    params:{
+                                      url:item,
+                                      scts:this.appInfo.getScreenshots(),
+                                      index:index
+                                    }
+                                  })
+                                })
+                                .objectFit(ImageFit.ScaleDown)
+                                .borderRadius(25)
+                                .borderColor("grey")
+                            }
+
+
+                          })
+                        }
+                        .listDirection(Axis.Horizontal)
+                        .chainAnimation(true)
+                        .height(160)
+                        .margin({bottom:20})
+                        Row() {
+                          ForEach(this.appInfo.tags.split(","), (item: any, index?: number) => {
+                            Toggle({isOn:false,type:ToggleType.Button,}){
+                              Text(item)
+                                .fontSize(16)
+
+                            }
+                            .height(30)
+                            .margin({right:10})
+
+
+                          })
+                        }
+                        Flex()
+                          .height(20)
+                        Text("App Intro")
+                          .fontSize(22)
+                          .fontWeight(FontWeight.Bold)
+                          .textAlign(TextAlign.Start)
+                        Flex()
+                          .height(10)
+                        Text(this.appInfo.maindesc)
+                          .opacity(0.8)
+                          .fontSize(20)
+                          .width(100)
+                          .width("100%")
+                          .maxLines(this.reloader)
+                          .textOverflow({overflow:TextOverflow.Clip})
+                          .onClick(()=>{
+                            this.reloader = 200
+                          })
+                        Flex()
+                          .height(20)
+                        Column(){
+                          Row(){
+                            Text("About this app")
+                              .fontSize(22)
+                              .textAlign(TextAlign.Start)
+                              .fontWeight(FontWeight.Bold)
+                            Text(">")
+                              .fontSize(22)
+                              .width("90%")
+                              .textAlign(TextAlign.End)
+                              .fontWeight(FontWeight.Bold)
+                          }
+                          Flex()
+                            .height(10)
+                          Row(){
+                            Text("Current Version")
+                              .opacity(0.8)
+                              .fontSize(20)
+                              .fontWeight(FontWeight.Bold)
+                            Text(this.releaseInfo.version)
+                              .opacity(0.8)
+                              .margin({left:20})
+                              .fontSize(20)
+                          }
+                          .height(30)
+                          Row(){
+                            Text("Developer")
+                              .opacity(0.8)
+                              .fontSize(20)
+                              .fontWeight(FontWeight.Bold)
+                            Text(this.appInfo.vender)
+                              .opacity(0.8)
+                              .margin({left:20})
+                              .fontSize(20)
+                          }
+                          .height(30)
+                          Row(){
+                            Text("Privacy Policy")
+                              .opacity(0.8)
+                              .fontSize(20)
+                              .fontWeight(FontWeight.Bold)
+                            Button("View Content")
+                              .opacity(0.8)
+                              .backgroundColor("transparent")
+                              .fontColor("blue")
+                              .margin({left:20})
+                              .fontSize(16)
+                          }
+                          .height(30)
+                          Row(){
+                            Text("Permissions")
+                              .opacity(0.8)
+                              .fontSize(20)
+                              .fontWeight(FontWeight.Bold)
+                            Button("View Permissions")
+                              .onClick(()=>{
+                                router.pushUrl({url:'pages/Permissions',params:{'releaseInfo':this.releaseInfo}})
+                              })
+                              .opacity(0.8)
+                              .fontColor("blue")
+                              .backgroundColor("transparent")
+                              .margin({left:20})
+                              .fontSize(16)
+                          }
+                          .height(30)
+                        }.alignItems(HorizontalAlign.Start).onClick(()=>{
+                          router.pushUrl({url:'pages/AppInfo',params:{'releaseInfo':this.releaseInfo,'appInfo':this.appInfo}})
+                        })
+
+                      }
+                      .alignItems(HorizontalAlign.Start)
+                      Flex()
+                        .height(30)
+                    }
+                    .edgeEffect(EdgeEffect.Spring)
+                  }
+                  .align(Alignment.Top)
+                  .tabBar("Description")
+
+                  TabContent() {
+                    Column(){
+                      Text(this.releaseInfo.minimumAPI.toString())
+                    }
+                    .width("100%")
+                    .height("100%")
+                  }
+                  .tabBar("Comments")
+                }
+                .vertical(false)
+                .width("100%")
+
+              }.padding(15)
+
+            }.borderRadius({ topLeft:18,topRight:18 }).backgroundColor('white').height("100%")
+
+
+          }.width('100%')
         }
         .edgeEffect(EdgeEffect.None)
         .width('100%')
-        .height('auto')
         .margin({bottom: 56})
+
       }
       .width('100%')
       .height('100%')
-    }.width('100%').height('100%').backgroundColor('#ffffff')
+      Stack() {
+        Button(this.appInfo.actionText.toString())
+          .width('100%').height(50).fontSize(16).fontColor('white').fontWeight(500)
+          .onClick(()=>{
+            this.appAction();
+          })
+
+        Button() {
+          Row() {
+            LoadingProgress().width('100%').height('100%').color('#3478f6')
+          }.alignItems(VerticalAlign.Center).width('100%').height('100%')
+        }
+        .width('100%').height(50).fontSize(16).fontColor('#3478f6').fontWeight(500)
+        .visibility(this.installLoading ? Visibility.Visible : Visibility.None)
+      }.margin({bottom:15,left:10,right:10}).width('75%')
+
+    }.width('100%').height('100%').backgroundImage($r('app.media.img_wallpaper_default')).backdropBlur(100)
+  }
+  appAction() {
+
+    if (this.appInfo.status == AppStatus.NOT_INSTALLED) {
+      // 校验hapUrl
+      if (!this.appInfo.getHapUrl()) {
+        promptAction.showToast({ message: '应用下载链接无效', duration: ToastDuration });
+        return;
+      }
+      // 未安装（下载或下载并安装）
+      this.downloadApp()
+    } else if (this.appInfo.status == AppStatus.INSTALLED) {
+      // 已安装（打开）
+      this.openApp()
+    } else if (this.appInfo.status == AppStatus.UPDATABLE) {
+      // 可更新(更新)
+      this.updateApp()
+    }
+  }
+
+  downloadApp() {
+    this.installLoading = true;
+    let _this = this;
+    let downloadTask;
+
+    // 下载路径，示例: /data/storage/el2/base/haps/entry/files/org.ohosdev.deviceinfo-v1.0.0.hap
+    let filePath = globalThis.abilityContext.filesDir + '/' + this.appInfo.packageName + '-' + this.releaseInfo.version + ".hap";
+
+    // 判断文件是否存在
+    fs.access(filePath).then((res) => {
+      if (res) {
+        // 存在，直接安装
+        this.installApp(filePath);
+      } else {
+        // 不存在，下载并安装
+        try {
+          //promptAction.showToast({ message: this.releaseInfo.getHapUrl(), duration: ToastDuration });
+          request.downloadFile(globalThis.abilityContext, {
+            url: this.releaseInfo.getHapUrl(),
+            filePath: filePath
+          }).then((data) => {
+            downloadTask = data;
+            // 监听下载完成
+            downloadTask.on('complete', function callback() {
+              console.info('Download task completed.');
+              // 安装应用
+              _this.installApp(filePath);
+            });
+            // 监听下载失败
+            downloadTask.on('fail', function callBack(err) {
+              console.info('Download task failed. Cause:' + err);
+              _this.installLoading = false;
+              promptAction.showToast({ message: '下载失败', duration: ToastDuration });
+            });
+          }).catch((err) => {
+            console.error('Failed to request the download. Cause: ' + JSON.stringify(err));
+            _this.installLoading = false;
+            promptAction.showToast({ message: '下载失败', duration: ToastDuration });
+          })
+        } catch (err) {
+          // err.message: bad file path   Download File already exists
+          console.error('err.code : ' + err.code + ', err.message : ' + err.message);
+          _this.installLoading = false;
+          promptAction.showToast({ message: '下载失败', duration: ToastDuration });
+        }
+      }
+    }).catch((err) => {
+      console.info("access failed with error message: " + err.message + ", error code: " + err.code);
+      this.installLoading = false;
+    });
+  }
+
+  // 安装应用 或 更新应用
+  installApp(hapPath: string) {
+    let hapFilePaths = [hapPath];
+    let installParam = {
+      userId: 100,
+      isKeepData: false,
+      installFlag: 1,
+    };
+
+    try {
+      installer.getBundleInstaller().then(data => {
+        data.install(hapFilePaths, installParam, err => {
+          this.installLoading = false;
+          if (err) {
+            console.error('install failed:' + err.message);
+            promptAction.showToast({ message: this.appInfo.actionText + '失败：' + err.message, duration: ToastDuration });
+          } else {
+            console.info('install successfully.');
+            promptAction.showToast({ message: this.appInfo.actionText + '成功', duration: ToastDuration });
+            // 更改状态和操作文本
+            this.appInfo.status = AppStatus.INSTALLED;
+            this.appInfo.actionText = AppActionText.OPEN;
+          }
+        });
+      }).catch(error => {
+        console.error('getBundleInstaller failed. Cause: ' + error.message);
+        this.installLoading = false;
+        promptAction.showToast({ message: this.appInfo.actionText + '失败：' + error.message, duration: ToastDuration });
+      });
+    } catch (error) {
+      console.error('getBundleInstaller failed. Cause: ' + error.message);
+      this.installLoading = false;
+      promptAction.showToast({ message: this.appInfo.actionText + '失败：' + error.message, duration: ToastDuration });
+    }
+  }
+
+  // 打开应用
+  openApp() {
+    // 检查应用是否已经安装，并获取指定包名应用的启动Ability名
+    let bundleName = this.appInfo.packageName;
+    let bundleFlags = bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_HAP_MODULE | bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_ABILITY;
+    let userId = 100;
+    try {
+      bundleManager.getBundleInfo(bundleName, bundleFlags, userId, (err, data) => {
+        if (err) {
+          // 获取失败
+          hilog.error(0x0000, 'testTag', 'getBundleInfo failed: %{public}s', err.message);
+          promptAction.showToast({ message: '打开失败：应用不存在', duration: ToastDuration });
+          this.appInfo.status = AppStatus.NOT_INSTALLED;
+          this.appInfo.actionText = AppActionText.INSTALL;
+        } else {
+          this.mainAbilityName = data.hapModulesInfo[0].mainElementName;
+          // 获取成功
+          hilog.info(0x0000, 'testTag', 'getBundleInfo successfully: %{public}s', JSON.stringify(data));
+          // 打开应用
+          globalThis.abilityContext.startAbility({
+            bundleName: this.appInfo.packageName,
+            abilityName: this.mainAbilityName,
+            moduleName: '',
+          }).then(() => {
+            console.error('startApplication promise success');
+            //            promptAction.showToast({ message: '打开成功', duration: ToastDuration });
+          }, (err) => {
+            console.error(`startApplication promise error: ${JSON.stringify(err)}`);
+            promptAction.showToast({ message: '打开失败：应用不存在', duration: ToastDuration });
+          });
+        }
+      });
+    } catch (err) {
+      hilog.error(0x0000, 'testTag', 'getBundleInfo failed: %{public}s', err.message);
+      promptAction.showToast({ message: '打开失败：应用不存在', duration: ToastDuration });
+      this.appInfo.status = AppStatus.NOT_INSTALLED;
+      this.appInfo.actionText = AppActionText.INSTALL;
+    }
+  }
+
+  updateApp() {
+    this.downloadApp()
+    /*try {
+      promptAction.showDialog({
+        title: '更新提示',
+        message: this.appInfo.name + '：' + this.versionCode + " → " + this.appInfo.version,
+        buttons: [
+          {
+            text: '取消',
+            color: '#000000',
+          },
+          {
+            text: '更新',
+            color: '#3478f6',
+          }
+        ],
+      }).then(data => {
+        console.info('showDialog success, click button: ' + data.index);
+        if (data.index == 1) {
+          this.downloadApp()
+        }
+      }).catch(err => {
+        console.info('showDialog error: ' + err);
+      })
+    } catch (error) {
+      console.error(`showDialog args error code is ${error.code}, message is ${error.message}`);
+    }*/
   }
 }
+
+
