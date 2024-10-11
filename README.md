@@ -1,4 +1,4 @@
-# F-OH
+# F-OHv2
 
 <img src="entry/src/main/resources/base/media/icon.png" width="128px" />
 
